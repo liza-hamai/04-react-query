@@ -7,7 +7,7 @@ import MovieGrid from '../MovieGrid/MovieGrid';
 import Loader from '../Loader/Loader';
 import ErrorMessage from '../ErrorMessage/ErrorMessage';
 import MovieModal from '../MovieModal/MovieModal';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import css from "./App.module.css"
 import ReactPaginateModule from "react-paginate";
 import { type ReactPaginateProps } from "react-paginate";
@@ -24,17 +24,18 @@ const ReactPaginate = (
 function App() {
 
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [movieId, setMovieId] = useState('');
+  const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: ['movie', movieId, page],
-    queryFn: () => fetchMovies(movieId, page),
-    enabled: movieId !=="",
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['movie', query, page],
+    queryFn: () => fetchMovies(query, page),
+    enabled: query !== "",
+    placeholderData: keepPreviousData,
   });
 
   const handleSearch = (query: string) => {
-    setMovieId(query);
+    setQuery(query);
     setPage(1);
   };
 
@@ -60,7 +61,7 @@ function App() {
         previousLabel="←"
       />}
       {isLoading && <Loader />}
-      {!isLoading && error && <ErrorMessage />}
+      {isError && <ErrorMessage />}
       <MovieGrid onSelect={setSelectedMovie} movies={data?.results ?? []} />
       {selectedMovie && <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />}
     </>
